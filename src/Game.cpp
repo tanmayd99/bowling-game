@@ -1,28 +1,35 @@
 #include "Game.h"
+#include "Frame.h"
+#include "BonusEvaluator.h"
 
 #include <iostream>
 
-const unsigned int Game::MAX_FRAMES = 10;
-const unsigned int Game::MAX_THROWS_PER_FRAME = 2;
-const unsigned int Game::MAX_PINS_PER_FRAME = 10;
+namespace
+{
+    constexpr unsigned int MAX_FRAMES = 10;
+}
+
+using namespace std;
 
 Game::Game()
-    : TotalScore(0)
+    : FrameInstance(std::make_unique<Frame>())
+    , BonusEvaluatorInstance(std::make_unique<BonusEvaluator>())
+    , TotalScore(0)
     , CurrentFrameIndex(0)
-    , CurrentFrameScore(0)
-    , ThrowCountWithinFrame(0)
-    , AcceptThrowsTracker(true)
 {
 
 }
 
+Game::~Game()
+{
+}
+
 void Game::Reset()
 {
+    FrameInstance.reset(new Frame());
+    BonusEvaluatorInstance.reset(new BonusEvaluator());
     TotalScore = 0;
     CurrentFrameIndex = 0;
-    CurrentFrameScore = 0;
-    ThrowCountWithinFrame = 0;
-    AcceptThrowsTracker = true;
 }
 
 bool Game::GameRunning() const
@@ -32,18 +39,47 @@ bool Game::GameRunning() const
 
 void Game::InitializeFrame()
 {
-    std::cout << "Frame " << GetCurrentFrameNumber() << std::endl;
-    CurrentFrameScore = 0;
-    ThrowCountWithinFrame = 0;
-    AcceptThrowsTracker = true;
+    ++CurrentFrameIndex;
+    cout << "Frame " << CurrentFrameIndex << endl;
+    FrameInstance->Reset();
+    FrameInstance->StartFrame();
+    if (CurrentFrameIndex == MAX_FRAMES)
+    {
+        FrameInstance->SetAsLastFrame();
+    }
 }
 
-void Game::ProcessThrow(std::string throwValue)
+void Game::ProcessFrame()
 {
-    ++ThrowCountWithinFrame;
 
+    while (FrameInstance->NextThrowNeeded())
+    {
+        char bowlingThrow{'q'};
+        cout << "Enter the throw : " << endl;
+        cin >> bowlingThrow;
+        if (bowlingThrow == 'q')
+        {
+            exit(1);
+        }
+        
+        try
+        {
+            ProcessThrow(bowlingThrow);
+        }
+        catch (invalid_argument& e)
+        {
+            cout << e.what() << endl;
+        }
+    }
+    BonusEvaluatorInstance->AllotBonusForFrame(FrameInstance.get());
+    TotalScore += (FrameInstance->GetFrameScore() + BonusEvaluatorInstance->GetBonusValue());
+    BonusEvaluatorInstance->ClearBonus();
+}
+
+void Game::ProcessThrow(char throwValue)
+{
     unsigned int currentThrowScore = 0;
-    switch(throwValue[0])
+    switch (throwValue)
     {
     case '0':
         break;
@@ -86,87 +122,22 @@ void Game::ProcessThrow(std::string throwValue)
 
     case 'x':
         currentThrowScore = 10;
-        AcceptThrowsTracker = false;
         break;
 
-    default :
+    default:
+        throw invalid_argument("Input is not from valid list of arguments. Please try again.");
         break;
     }
 
-    if((currentThrowScore + CurrentFrameScore) > MAX_PINS_PER_FRAME )
+    try
     {
-        if(ThrowCountWithinFrame == MAX_THROWS_PER_FRAME)
-        {
-            if(!((CurrentFrameIndex == 9) && (CurrentFrameScore == MAX_FRAMES)))
-            {
-                std::cout << "Bad Throw: Throw exeeds maximum PINs available to knock down. Awarding Zero score for the current thow" << std::endl;
-                currentThrowScore = 0;
-            }
-        }
+        FrameInstance->ProcessThrow(currentThrowScore);
     }
-
-    CurrentFrameScore += currentThrowScore;
-
-    bool allotBonusScore = false;
-    bool allotBonusThrow = false;
-    if(BonusTracker > 0)
+    catch (out_of_range& e) 
     {
-        allotBonusScore = true;
-        --BonusTracker;
+        cout << e.what() << endl;
     }
-
-    if((ThrowCountWithinFrame >= MAX_THROWS_PER_FRAME))
-    {
-        AcceptThrowsTracker = false;
-        if((CurrentFrameScore == MAX_PINS_PER_FRAME ) && (ThrowCountWithinFrame == MAX_THROWS_PER_FRAME))
-        {
-            if(CurrentFrameIndex == 9)
-            {
-                allotBonusThrow = true;
-            }
-            else
-            {
-                ++BonusTracker;
-            }
-        }
-    }
-    else if(throwValue == "x")
-    {
-        if((CurrentFrameIndex == 9) && (ThrowCountWithinFrame < MAX_THROWS_PER_FRAME))
-        {
-            allotBonusThrow = true;
-        }
-        else
-        {
-            BonusTracker += 2;
-        }
-    }
-
-    if(allotBonusThrow)
-    {
-        AcceptThrowsTracker = true;
-        allotBonusThrow = false;
-    }
-
-    if(allotBonusScore)
-    {
-        TotalScore += currentThrowScore;
-    }
-
-    if(AcceptThrowsTracker == false)
-    {
-        TotalScore += CurrentFrameScore;
-    }
-}
-
-bool Game::AcceptThrows() const
-{
-    return AcceptThrowsTracker;
-}
-
-void Game::NextFrame()
-{
-    ++CurrentFrameIndex;
+    BonusEvaluatorInstance->AwardBonusIfApplicable(currentThrowScore, FrameInstance.get());
 }
 
 unsigned int Game::GetTotalScore() const
@@ -176,10 +147,10 @@ unsigned int Game::GetTotalScore() const
 
 unsigned int Game::GetCurrentFrameNumber() const
 {
-    return (CurrentFrameIndex + 1);
+    return CurrentFrameIndex;
 }
 
 unsigned int Game::GetCurrentFrameScore() const
 {
-    return CurrentFrameScore;
+    return FrameInstance->GetFrameScore();
 }
