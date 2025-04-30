@@ -6,3 +6,6 @@
 /bowling-game/x64/Debug
 /x64/Debug
 /bowling-game.vcxproj.user
+/packages/Microsoft.googletest.v140.windesktop.msvcstl.static.rt-dyn.1.8.1.7
+/tests/x64/Debug
+/tests/tests.vcxproj.user
