@@ -21,3 +21,11 @@ Game Rules
 	- No more than three throws are allowed for the 10" frame.
 	- No bonus scores are granted for Strikes and Spares in 10" frame.
 	- If a player hits a Strike / Spare, 10 pins will be avallable again for the next throw within the 10" frame.
+
+# Class diagram
+
+![image](https://github.com/user-attachments/assets/0049bac1-30f0-4569-84d6-fe26bd0ed6d2)
+
+# Sequence diagram
+![bowling-game-sequence](https://github.com/user-attachments/assets/e3cd9e86-1df6-4146-a358-64cd349c0782)
+
