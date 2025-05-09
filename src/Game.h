@@ -23,7 +23,7 @@ public:
     unsigned int GetCurrentFrameScore() const;
 
 private:
-    void ProcessThrow(char throwValue);
+    void ProcessThrow(std::string throwValue);
 
     std::unique_ptr<Frame> FrameInstance;
     std::unique_ptr<BonusEvaluator> BonusEvaluatorInstance;

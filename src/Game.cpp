@@ -3,6 +3,7 @@
 #include "BonusEvaluator.h"
 
 #include <iostream>
+#include <regex>
 
 namespace
 {
@@ -54,14 +55,9 @@ void Game::ProcessFrame()
 
     while (FrameInstance->NextThrowNeeded())
     {
-        char bowlingThrow{'q'};
-        cout << "Enter the throw : " << endl;
+        std::string bowlingThrow;
+        cout << "Enter the throw : ";
         cin >> bowlingThrow;
-        if (bowlingThrow == 'q')
-        {
-            exit(1);
-        }
-        
         try
         {
             ProcessThrow(bowlingThrow);
@@ -76,57 +72,22 @@ void Game::ProcessFrame()
     BonusEvaluatorInstance->ClearBonus();
 }
 
-void Game::ProcessThrow(char throwValue)
+void Game::ProcessThrow(std::string throwValue)
 {
     unsigned int currentThrowScore = 0;
-    switch (throwValue)
+    std::regex regexp("^[0-9]*$");
+    if (std::regex_match(throwValue, regexp))
     {
-    case '0':
-        break;
 
-    case '1':
-        currentThrowScore = 1;
-        break;
-
-    case '2':
-        currentThrowScore = 2;
-        break;
-
-    case '3':
-        currentThrowScore = 3;
-        break;
-
-    case '4':
-        currentThrowScore = 4;
-        break;
-
-    case '5':
-        currentThrowScore = 5;
-        break;
-
-    case '6':
-        currentThrowScore = 6;
-        break;
-
-    case '7':
-        currentThrowScore = 7;
-        break;
-
-    case '8':
-        currentThrowScore = 8;
-        break;
-
-    case '9':
-        currentThrowScore = 9;
-        break;
-
-    case 'x':
-        currentThrowScore = 10;
-        break;
-
-    default:
+        currentThrowScore = std::stoi(throwValue);
+        if (currentThrowScore > 10)
+        {
+            throw invalid_argument("Input is not from valid list of arguments. Please try again.");
+        }
+    }
+    else
+    {
         throw invalid_argument("Input is not from valid list of arguments. Please try again.");
-        break;
     }
 
     try

@@ -9,7 +9,7 @@ using namespace std;
 int main()
 {
     cout << "Welcome to the Bowling Arena !!" << endl;
-    cout << "Valid Throw format : 0-9 , x - strike , q - quit , any other key - foul (zero score for the throw)" << endl;
+    cout << "Valid Throw format : 0-10 , values greater than 10 or any other key - foul (zero score for the throw)" << endl;
     cout << "Get Ready....." << endl;
 
     string playAgain{ "y" };
